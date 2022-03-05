@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "switch-on-coffee-and-keto"
+  },
+  "targets": {
+    "switch-on-coffee-and-keto": {
+      "hosting": {
+        "switchon-kitchenscreen": [
+          "switch-on-kitchenscreen"
+        ]
+      }
+    }
+  }
+}
