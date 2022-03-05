@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:socket_io_client/socket_io_client.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'dart:async';
 
+FirebaseDatabase database = FirebaseDatabase.instance;
+DatabaseReference orderRef = FirebaseDatabase.instance.ref("orders");
+
 class OrderCard extends StatefulWidget {
-  final Socket socket;
-  const OrderCard({Key? key, required this.socket}) : super(key: key);
+  const OrderCard({Key? key}) : super(key: key);
 
   @override
   _OrderCardState createState() => _OrderCardState();
@@ -23,14 +25,9 @@ class _OrderCardState extends State<OrderCard> {
   }
 
   @override
-  initState() {
-    widget.socket.on('orders', (newOrders) {
-      setState(() {
-        orders = newOrders;
-      });
-    });
-    widget.socket.emit('orders');
+  initState() { 
     super.initState();
+    connect();
   }
 
   @override
@@ -39,46 +36,105 @@ class _OrderCardState extends State<OrderCard> {
     super.dispose();
   }
 
-  handleIncrementState(String orderID, String itemID) {
-    widget.socket.emit('update_state', {
-      'orderID': orderID,
-      'itemID': itemID,
+  void connect() async {
+    orderRef.onValue.listen((DatabaseEvent event) {
+      final snapShotOnValue = event.snapshot;
+      setState(() {
+        if (snapShotOnValue.exists) { 
+          orders = snapShotOnValue.value; 
+        }
+      });
     });
   }
-  
-  stateColor(String state) {
-    switch (state) {
-      case 'wait': {
-        return ButtonStyle(
-            backgroundColor: MaterialStateProperty.all<Color>(Colors.lightBlue)
-        );
+
+  String nextStateCycle(String state, String categories) {
+    if (categories == "drinks") {
+      if (state == "wait") {
+        return "process";
+      } else if (state == "process") {
+        return "done";
+      } else if (state == "done") {
+        return "served";
+      } else {
+        return "served";
       }
-      case 'process': {
-        return ButtonStyle(
-            backgroundColor: MaterialStateProperty.all<Color>(Colors.amber)
-        );
-      }
-      case 'done': {
-        return ButtonStyle(
-            backgroundColor: MaterialStateProperty.all<Color>(Colors.lightGreen)
-        );
-      }
-      default: {
-        return ButtonStyle(
-            backgroundColor: MaterialStateProperty.all<Color>(Colors.grey)
-        );
+    } else {
+      if (state == "wait") {
+        return "done";
+      } else if (state == "done") {
+        return "served";
+      } else {
+        return "served";
       }
     }
   }
 
-  isDisable(String? state){
+  void handleIncrementState(String orderID, int itemID) async {
+    String nextState = nextStateCycle(
+      orders[orderID]['items'][itemID]["state"],
+      orders[orderID]['items'][itemID]["categories"]
+    );
+    await orderRef.update({
+      orderID + "/items/" + itemID.toString() + "/state": nextState,
+    });
+    if(nextState == "served") {
+      return handleRemove(orderID);
+    }
+  }
+
+  void handleRemove(String orderID) async {
+    bool allServed = true;
+    for (var value in orders[orderID]['items']){
+      bool isServed = (value["state"] == "served");
+      allServed = allServed && isServed;
+      print(allServed);
+    };
+    if (allServed) {
+      await orderRef.update({orderID: null}); 
+    }
+  }
+
+  void handleUpdateCustomerName(String orderID, String? customerName) async {
+    if (customerName != null) {
+      await orderRef.update({orderID + "/customer_name": customerName});
+    }
+  }
+
+  ButtonStyle stateColor(String state) {
+    switch (state) {
+      case 'wait':
+        {
+          return ButtonStyle(
+              backgroundColor:
+                  MaterialStateProperty.all<Color>(Colors.lightBlue));
+        }
+      case 'process':
+        {
+          return ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(Colors.amber));
+        }
+      case 'done':
+        {
+          return ButtonStyle(
+              backgroundColor:
+                  MaterialStateProperty.all<Color>(Colors.lightGreen));
+        }
+      default:
+        {
+          return ButtonStyle(
+              backgroundColor: MaterialStateProperty.all<Color>(Colors.grey));
+        }
+    }
+  }
+
+  isDisable(String? state) {
     state = state.toString();
-    if (state == 'served'){
+    if (state == 'served') {
       return true;
     }
     return false;
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
@@ -91,32 +147,28 @@ class _OrderCardState extends State<OrderCard> {
       ),
       itemCount: orders.length,
       itemBuilder: (BuildContext context, int index) {
+        String key = orders.keys.elementAt(index);
         var _focusNode = FocusNode();
         return Card(
           color: Colors.grey[10],
           child: Container(
               padding: const EdgeInsets.all(10),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 2.0),
-                    child: Row(
-                      children: <Widget>[
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 2.0),
+                      child: Row(children: <Widget>[
                         Flexible(
                           child: TextField(
                             focusNode: _focusNode,
                             controller: TextEditingController()
-                                ..text = orders[index]['customer_name']??= '',
+                              ..text = orders[key]['customer_name'] ??= '',
                             onChanged: (customerName) {
-                              debouncing(
-                                fn: () {
-                                  widget.socket.emit('update_name', {
-                                    'orderID': orders[index]['_id'],
-                                    'customer_name': customerName
-                                  });
-                                }
-                              );
+                              debouncing(fn: () {
+                                handleUpdateCustomerName(
+                                    key, customerName);
+                              });
                             },
                             decoration: const InputDecoration(
                               border: OutlineInputBorder(),
@@ -128,72 +180,89 @@ class _OrderCardState extends State<OrderCard> {
                           padding: const EdgeInsets.only(left: 10),
                           child: SizedBox(
                             height: 50,
-                            child: ElevatedButton(onPressed: () => _focusNode.requestFocus(),
+                            child: ElevatedButton(
+                                onPressed: () => _focusNode.requestFocus(),
                                 child: const Text('Rename')),
                           ),
                         ),
-                      ]
+                      ]),
                     ),
-                  ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: orders[index]['items'].map<Widget>(
-                        (item) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 2),
-                          child: Container(
-                            decoration: const ShapeDecoration(
-                              shape: RoundedRectangleBorder(
-                                side: BorderSide(
-                                    width: 1.0,
-                                    style: BorderStyle.solid,
-                                    color: Colors.grey
-                                ),
-                                borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      Text(item['name'], textScaleFactor: 1.2,),
-                                      Text(item['variation'].toString()
-                                          .replaceAll(', ', '\n')),
-                                      if (item['modifier'] != null)
-                                        Text(item['modifier'].toString()
-                                            .replaceAll(', ', '\n')),
-                                    ],
-                                  ),
-                                  Text(item['quantity'], textScaleFactor: 1.2,),
-                                  ElevatedButton(
-                                      onPressed: isDisable(item['state'])?
-                                      null :() {handleIncrementState(
-                                          orders[index]['_id'],
-                                          item['_id'],
-                                      );},
-                                      style: stateColor(item['state'].toString()),
-                                      child: Text(item['state'].toString())
-                                  ),
-                                ]
-                              ),
-                            ),
-                          ),
-                        )
-                        ).toList(),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          children: orders[key]['items']
+                              .map<Widget>((item) => Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 2),
+                                    child: Container(
+                                      decoration: const ShapeDecoration(
+                                        shape: RoundedRectangleBorder(
+                                          side: BorderSide(
+                                              width: 1.0,
+                                              style: BorderStyle.solid,
+                                              color: Colors.grey),
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(5.0)),
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(5.0),
+                                        child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment
+                                                    .spaceBetween,
+                                            children: [
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Text(
+                                                    item['name'],
+                                                    textScaleFactor: 1.2,
+                                                  ),
+                                                  Text(item['variation']
+                                                      .toString()
+                                                      .replaceAll(
+                                                          ', ', '\n')),
+                                                  if (item['modifier'] !=
+                                                      null)
+                                                    Text(item['modifier']
+                                                        .toString()
+                                                        .replaceAll(
+                                                            ', ', '\n')),
+                                                ],
+                                              ),
+                                              Text(
+                                                item['quantity'],
+                                                textScaleFactor: 1.2,
+                                              ),
+                                              ElevatedButton(
+                                                  onPressed:
+                                                      isDisable(item['state'])
+                                                          ? null
+                                                          : () {
+                                                              handleIncrementState(
+                                                                key,
+                                                                item['id'],
+                                                              );
+                                                            },
+                                                  style: stateColor(
+                                                      item['state']
+                                                          .toString()),
+                                                  child: Text(item['state']
+                                                      .toString())),
+                                            ]),
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
+                        ),
                       ),
                     ),
-                  ),
-                ]
-              )
-          ),
+                  ])),
         );
-      }
-    );
+      });
   }
 }

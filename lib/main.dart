@@ -1,35 +1,15 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:socket_io_client/socket_io_client.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 import 'order_card.dart';
 
-class MyHttpOverrides extends HttpOverrides {
-  @override
-  HttpClient createHttpClient(SecurityContext? context) {
-    return super.createHttpClient(context)
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true;
-  }
-}
-
-late Socket socket;
-
 void main() async {
-  HttpOverrides.global = MyHttpOverrides();
   await dotenv.load(fileName: ".env");
-  socket = io(
-      dotenv.env['HOST_URL'].toString(),
-      OptionBuilder()
-          .setPath(dotenv.env['HOST_PATH'].toString())
-          .setTransports(['websocket', 'polling'])
-          .enableReconnection()
-          .build());
-  socket.connect();
-  socket.onConnect((_) {
-    print('connect');
-  });
-  socket.onDisconnect((_) => print('disconnect'));
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -43,7 +23,7 @@ class KitchenRoute extends StatelessWidget {
         appBar: AppBar(
           title: const Text("Kitchen Screen"),
         ),
-        body: OrderCard(socket: socket));
+        body: const OrderCard());
   }
 }
 
