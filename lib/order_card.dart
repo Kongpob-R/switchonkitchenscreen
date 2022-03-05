@@ -148,6 +148,7 @@ class _OrderCardState extends State<OrderCard> {
       itemCount: orders.length,
       itemBuilder: (BuildContext context, int index) {
         String key = orders.keys.elementAt(index);
+        String customerName = orders[key]['customer_name'] ??= '';
         var _focusNode = FocusNode();
         return Card(
           color: Colors.grey[10],
@@ -163,7 +164,11 @@ class _OrderCardState extends State<OrderCard> {
                           child: TextField(
                             focusNode: _focusNode,
                             controller: TextEditingController()
-                              ..text = orders[key]['customer_name'] ??= '',
+                              ..text = customerName
+                              ..selection = TextSelection(
+                                baseOffset: customerName.length,
+                                extentOffset: customerName.length,
+                              ),
                             onChanged: (customerName) {
                               debouncing(fn: () {
                                 handleUpdateCustomerName(
