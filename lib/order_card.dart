@@ -25,7 +25,7 @@ class _OrderCardState extends State<OrderCard> {
   }
 
   @override
-  initState() { 
+  initState() {
     super.initState();
     connect();
   }
@@ -40,8 +40,8 @@ class _OrderCardState extends State<OrderCard> {
     orderRef.onValue.listen((DatabaseEvent event) {
       final snapShotOnValue = event.snapshot;
       setState(() {
-        if (snapShotOnValue.exists) { 
-          orders = snapShotOnValue.value; 
+        if (snapShotOnValue.exists) {
+          orders = snapShotOnValue.value;
         }
       });
     });
@@ -70,27 +70,27 @@ class _OrderCardState extends State<OrderCard> {
   }
 
   void handleIncrementState(String orderID, int itemID) async {
-    String nextState = nextStateCycle(
-      orders[orderID]['items'][itemID]["state"],
-      orders[orderID]['items'][itemID]["categories"]
-    );
+    String nextState = nextStateCycle(orders[orderID]['items'][itemID]["state"],
+        orders[orderID]['items'][itemID]["categories"]);
     await orderRef.update({
       orderID + "/items/" + itemID.toString() + "/state": nextState,
     });
-    if(nextState == "served") {
+    if (nextState == "served") {
       return handleRemove(orderID);
     }
   }
 
   void handleRemove(String orderID) async {
     bool allServed = true;
-    for (var value in orders[orderID]['items']){
+    for (var value in orders[orderID]['items']) {
       bool isServed = (value["state"] == "served");
       allServed = allServed && isServed;
-      print(allServed);
-    };
+    }
     if (allServed) {
-      await orderRef.update({orderID: null}); 
+      await orderRef.update({
+        orderID: null,
+        'alert/bell': 'active',
+      });
     }
   }
 
@@ -138,136 +138,135 @@ class _OrderCardState extends State<OrderCard> {
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
-      // Create a grid with 2 columns. If you change the scrollDirection to
-      // horizontal, this produces 2 rows.
-      scrollDirection: Axis.horizontal,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        childAspectRatio: 1.3,
-      ),
-      itemCount: orders.length,
-      itemBuilder: (BuildContext context, int index) {
-        String key = orders.keys.elementAt(index);
-        String customerName = orders[key]['customer_name'] ??= '';
-        var _focusNode = FocusNode();
-        return Card(
-          color: Colors.grey[10],
-          child: Container(
-              padding: const EdgeInsets.all(10),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 2.0),
-                      child: Row(children: <Widget>[
-                        Flexible(
-                          child: TextField(
-                            focusNode: _focusNode,
-                            controller: TextEditingController()
-                              ..text = customerName
-                              ..selection = TextSelection(
-                                baseOffset: customerName.length,
-                                extentOffset: customerName.length,
+        // Create a grid with 2 columns. If you change the scrollDirection to
+        // horizontal, this produces 2 rows.
+        scrollDirection: Axis.horizontal,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          childAspectRatio: 1.3,
+        ),
+        itemCount: orders.length,
+        itemBuilder: (BuildContext context, int index) {
+          String key = orders.keys.elementAt(index);
+          String customerName = orders[key]['customer_name'] ??= '';
+          var _focusNode = FocusNode();
+          return Card(
+            color: Colors.grey[10],
+            child: Container(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2.0),
+                        child: Row(children: <Widget>[
+                          Flexible(
+                            child: TextField(
+                              focusNode: _focusNode,
+                              controller: TextEditingController()
+                                ..text = customerName
+                                ..selection = TextSelection(
+                                  baseOffset: customerName.length,
+                                  extentOffset: customerName.length,
+                                ),
+                              onChanged: (customerName) {
+                                debouncing(fn: () {
+                                  handleUpdateCustomerName(key, customerName);
+                                });
+                              },
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                hintText: 'Customer Name',
                               ),
-                            onChanged: (customerName) {
-                              debouncing(fn: () {
-                                handleUpdateCustomerName(
-                                    key, customerName);
-                              });
-                            },
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                              hintText: 'Customer Name',
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10),
-                          child: SizedBox(
-                            height: 50,
-                            child: ElevatedButton(
-                                onPressed: () => _focusNode.requestFocus(),
-                                child: const Text('Rename')),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 10),
+                            child: SizedBox(
+                              height: 50,
+                              child: ElevatedButton(
+                                  onPressed: () => _focusNode.requestFocus(),
+                                  child: const Text('Rename')),
+                            ),
                           ),
-                        ),
-                      ]),
-                    ),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          children: orders[key]['items']
-                              .map<Widget>((item) => Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 2),
-                                    child: Container(
-                                      decoration: const ShapeDecoration(
-                                        shape: RoundedRectangleBorder(
-                                          side: BorderSide(
-                                              width: 1.0,
-                                              style: BorderStyle.solid,
-                                              color: Colors.grey),
-                                          borderRadius: BorderRadius.all(
-                                              Radius.circular(5.0)),
+                        ]),
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.max,
+                            children: orders[key]['items']
+                                .map<Widget>((item) => Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 2),
+                                      child: Container(
+                                        decoration: const ShapeDecoration(
+                                          shape: RoundedRectangleBorder(
+                                            side: BorderSide(
+                                                width: 1.0,
+                                                style: BorderStyle.solid,
+                                                color: Colors.grey),
+                                            borderRadius: BorderRadius.all(
+                                                Radius.circular(5.0)),
+                                          ),
                                         ),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(5.0),
-                                        child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment
-                                                    .spaceBetween,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: <Widget>[
-                                                  Text(
-                                                    item['name'],
-                                                    textScaleFactor: 1.2,
-                                                  ),
-                                                  Text(item['variation']
-                                                      .toString()
-                                                      .replaceAll(
-                                                          ', ', '\n')),
-                                                  if (item['modifier'] !=
-                                                      null)
-                                                    Text(item['modifier']
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(5.0),
+                                          child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: <Widget>[
+                                                    Text(
+                                                      item['name'],
+                                                      textScaleFactor: 1.2,
+                                                    ),
+                                                    Text(item['variation']
                                                         .toString()
                                                         .replaceAll(
                                                             ', ', '\n')),
-                                                ],
-                                              ),
-                                              Text(
-                                                item['quantity'],
-                                                textScaleFactor: 1.2,
-                                              ),
-                                              ElevatedButton(
-                                                  onPressed:
-                                                      isDisable(item['state'])
-                                                          ? null
-                                                          : () {
-                                                              handleIncrementState(
-                                                                key,
-                                                                item['id'],
-                                                              );
-                                                            },
-                                                  style: stateColor(
-                                                      item['state']
-                                                          .toString()),
-                                                  child: Text(item['state']
-                                                      .toString())),
-                                            ]),
+                                                    if (item['modifier'] !=
+                                                        null)
+                                                      Text(item['modifier']
+                                                          .toString()
+                                                          .replaceAll(
+                                                              ', ', '\n')),
+                                                  ],
+                                                ),
+                                                Text(
+                                                  item['quantity'],
+                                                  textScaleFactor: 1.2,
+                                                ),
+                                                ElevatedButton(
+                                                    onPressed:
+                                                        isDisable(item['state'])
+                                                            ? null
+                                                            : () {
+                                                                handleIncrementState(
+                                                                  key,
+                                                                  item['id'],
+                                                                );
+                                                              },
+                                                    style: stateColor(
+                                                        item['state']
+                                                            .toString()),
+                                                    child: Text(item['state']
+                                                        .toString())),
+                                              ]),
+                                        ),
                                       ),
-                                    ),
-                                  ))
-                              .toList(),
+                                    ))
+                                .toList(),
+                          ),
                         ),
                       ),
-                    ),
-                  ])),
-        );
-      });
+                    ])),
+          );
+        });
   }
 }
