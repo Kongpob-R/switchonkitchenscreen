@@ -42,6 +42,8 @@ class _OrderCardState extends State<OrderCard> {
       setState(() {
         if (snapShotOnValue.exists) {
           orders = snapShotOnValue.value;
+        } else {
+          orders = [];
         }
       });
     });
@@ -87,8 +89,8 @@ class _OrderCardState extends State<OrderCard> {
       allServed = allServed && isServed;
     }
     if (allServed) {
-      await orderRef.update({
-        orderID: null,
+      await database.ref().update({
+        'orders/' + orderID: null,
         'alert/bell': 'active',
       });
     }
