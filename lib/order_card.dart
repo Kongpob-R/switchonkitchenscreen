@@ -15,6 +15,7 @@ class OrderCard extends StatefulWidget {
 class _OrderCardState extends State<OrderCard> {
   dynamic orders = [];
   Timer? _debounce;
+  Timer? removeServedOrderTimer;
 
   void debouncing({required Function() fn, int waitForMs = 500}) {
     // if this function is called before 500ms [waitForMs] expired
@@ -28,6 +29,14 @@ class _OrderCardState extends State<OrderCard> {
   initState() {
     super.initState();
     connect();
+    removeServedOrderTimer = Timer.periodic(
+      const Duration(hours: 1),
+      (timer) {
+        for (var order in orders) {
+          handleRemove(order['id']);
+        }
+      },
+    );
   }
 
   @override
@@ -49,36 +58,51 @@ class _OrderCardState extends State<OrderCard> {
     });
   }
 
-  String nextStateCycle(String state, String categories) {
-    if (categories == "drinks") {
-      if (state == "wait") {
-        return "process";
-      } else if (state == "process") {
-        return "done";
-      } else if (state == "done") {
-        return "served";
-      } else {
-        return "served";
-      }
+  String nextStateCycle(String state) {
+    if (state == "wait") {
+      return "process";
+    } else if (state == "process") {
+      return "done";
+    } else if (state == "done") {
+      return "served";
     } else {
-      if (state == "wait") {
-        return "done";
-      } else if (state == "done") {
-        return "served";
-      } else {
-        return "served";
-      }
+      return "served";
+    }
+  }
+
+  Text stateInThai(String state) {
+    switch (state) {
+      case 'wait':
+        {
+          return const Text("รอ");
+        }
+      case 'process':
+        {
+          return const Text("กำลังทำ");
+        }
+      case 'done':
+        {
+          return const Text("พร้อมเสิร์ฟ");
+        }
+      default:
+        {
+          return const Text("เสิร์ฟแล้ว");
+        }
     }
   }
 
   void handleIncrementState(String orderID, int itemID) async {
-    String nextState = nextStateCycle(orders[orderID]['items'][itemID]["state"],
-        orders[orderID]['items'][itemID]["categories"]);
+    String nextState =
+        nextStateCycle(orders[orderID]['items'][itemID]["state"]);
     await orderRef.update({
       orderID + "/items/" + itemID.toString() + "/state": nextState,
     });
     if (nextState == "served") {
-      return handleRemove(orderID);
+      handleRemove(orderID);
+    } else if (nextState == "done") {
+      await database.ref().update({
+        'alert/bell': 'active',
+      });
     }
   }
 
@@ -91,7 +115,6 @@ class _OrderCardState extends State<OrderCard> {
     if (allServed) {
       await database.ref().update({
         'orders/' + orderID: null,
-        'alert/bell': 'active',
       });
     }
   }
@@ -151,7 +174,6 @@ class _OrderCardState extends State<OrderCard> {
         itemBuilder: (BuildContext context, int index) {
           String key = orders.keys.elementAt(index);
           String customerName = orders[key]['customer_name'] ??= '';
-          var _focusNode = FocusNode();
           return Card(
             color: Colors.grey[10],
             child: Container(
@@ -160,35 +182,12 @@ class _OrderCardState extends State<OrderCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 2.0),
+                        padding: const EdgeInsets.all(2.0),
                         child: Row(children: <Widget>[
                           Flexible(
-                            child: TextField(
-                              focusNode: _focusNode,
-                              controller: TextEditingController()
-                                ..text = customerName
-                                ..selection = TextSelection(
-                                  baseOffset: customerName.length,
-                                  extentOffset: customerName.length,
-                                ),
-                              onChanged: (customerName) {
-                                debouncing(fn: () {
-                                  handleUpdateCustomerName(key, customerName);
-                                });
-                              },
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: 'Customer Name',
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 10),
-                            child: SizedBox(
-                              height: 50,
-                              child: ElevatedButton(
-                                  onPressed: () => _focusNode.requestFocus(),
-                                  child: const Text('Rename')),
+                            child: Text(
+                              customerName,
+                              textScaleFactor: 1.2,
                             ),
                           ),
                         ]),
@@ -245,20 +244,23 @@ class _OrderCardState extends State<OrderCard> {
                                                   textScaleFactor: 1.2,
                                                 ),
                                                 ElevatedButton(
-                                                    onPressed:
-                                                        isDisable(item['state'])
-                                                            ? null
-                                                            : () {
-                                                                handleIncrementState(
-                                                                  key,
-                                                                  item['id'],
-                                                                );
-                                                              },
-                                                    style: stateColor(
-                                                        item['state']
-                                                            .toString()),
-                                                    child: Text(item['state']
-                                                        .toString())),
+                                                  onPressed: isDisable(
+                                                    item['state'],
+                                                  )
+                                                      ? null
+                                                      : () {
+                                                          handleIncrementState(
+                                                            key,
+                                                            item['id'],
+                                                          );
+                                                        },
+                                                  style: stateColor(
+                                                    item['state'].toString(),
+                                                  ),
+                                                  child: stateInThai(
+                                                    item['state'].toString(),
+                                                  ),
+                                                ),
                                               ]),
                                         ),
                                       ),
