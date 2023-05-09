@@ -46,7 +46,7 @@ class _OrderCardState extends State<OrderCard> {
   }
 
   void connect() async {
-    orderRef.onValue.listen((DatabaseEvent event) {
+    orderRef.onValue.listen((var event) {
       final snapShotOnValue = event.snapshot;
       setState(() {
         if (snapShotOnValue.exists) {

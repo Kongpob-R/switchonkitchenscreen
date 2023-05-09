@@ -1,0 +1,119 @@
+{
+  "project_info": {
+    "project_number": "236885951067",
+    "firebase_url": "https://switch-on-coffee-and-keto-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "switch-on-coffee-and-keto",
+    "storage_bucket": "switch-on-coffee-and-keto.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:236885951067:android:51e937edf0b365cd35357e",
+        "android_client_info": {
+          "package_name": "com.happysoft.switchonkitchenscreen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "236885951067-3osek426l7gu3tntqksh7u3d31cqj6bg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQPQY_r_mv5H7-xo-mBomv8wLXtYjtvvk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "236885951067-3osek426l7gu3tntqksh7u3d31cqj6bg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "236885951067-8j2jtd5lfqkard4qbm31l9gj9ns507up.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.happysoft.switchonkitchenscreen"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:236885951067:android:c575e192106b4c4135357e",
+        "android_client_info": {
+          "package_name": "com.happysoft.switchonoutputscreen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "236885951067-3osek426l7gu3tntqksh7u3d31cqj6bg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQPQY_r_mv5H7-xo-mBomv8wLXtYjtvvk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "236885951067-3osek426l7gu3tntqksh7u3d31cqj6bg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "236885951067-8j2jtd5lfqkard4qbm31l9gj9ns507up.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.happysoft.switchonkitchenscreen"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:236885951067:android:daa877956a324aac35357e",
+        "android_client_info": {
+          "package_name": "com.happysoft.switchonqueueoutputscreen"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "236885951067-3osek426l7gu3tntqksh7u3d31cqj6bg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQPQY_r_mv5H7-xo-mBomv8wLXtYjtvvk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "236885951067-3osek426l7gu3tntqksh7u3d31cqj6bg.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "236885951067-8j2jtd5lfqkard4qbm31l9gj9ns507up.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.happysoft.switchonkitchenscreen"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

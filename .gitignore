@@ -29,10 +29,10 @@
 .packages
 .pub-cache/
 .pub/
+.fvm/
 /build/
 
 # Web related
-lib/generated_plugin_registrant.dart
 
 # Symbolication related
 app.*.symbols
@@ -46,5 +46,5 @@ app.*.map.json
 /android/app/release
 
 .env
-lib/firebase_options.dart
 .firebase/hosting.YnVpbGQvd2Vi.cache
+.firebase/

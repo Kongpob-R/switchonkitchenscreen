@@ -3,11 +3,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'order_card.dart';
+import 'dashboard.dart';
 
 void main() async {
   await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
+  Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const MyApp());
@@ -24,6 +25,20 @@ class KitchenRoute extends StatelessWidget {
           title: const Text("Kitchen Screen"),
         ),
         body: const OrderCard());
+  }
+}
+
+class DashboardRoute extends StatelessWidget {
+  const DashboardRoute({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar(
+          title: const Text("Dashboard Screen"),
+        ),
+        body: const Dashboard());
   }
 }
 
@@ -50,6 +65,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/kitchen',
       routes: {
         '/kitchen': (context) => const KitchenRoute(),
+        '/dashboard': (context) => const DashboardRoute(),
       },
     );
   }
