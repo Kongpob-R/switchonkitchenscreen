@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:switchonkitchenscreen/auth_gate.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'order_card.dart';
 import 'dashboard.dart';
@@ -34,11 +36,25 @@ class DashboardRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: false,
-        appBar: AppBar(
-          title: const Text("Dashboard Screen"),
-        ),
-        body: const Dashboard());
+      resizeToAvoidBottomInset: false,
+      appBar: AppBar(
+        title: const Text("Dashboard Screen"),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(
+              Icons.exit_to_app,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              FirebaseAuth.instance.signOut();
+            },
+          )
+        ],
+      ),
+      body: const AuthGate(
+        screen: Dashboard(),
+      ),
+    );
   }
 }
 

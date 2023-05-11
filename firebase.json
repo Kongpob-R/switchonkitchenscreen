@@ -3,18 +3,14 @@
     "rules": "database.rules.json"
   },
   "hosting": {
-    "target": "switchon-kitchenscreen",
-    "public": "build/web",
+    "public": "web",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
     ]
+  },
+  "storage": {
+    "rules": "storage.rules"
   }
 }
