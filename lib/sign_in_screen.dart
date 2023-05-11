@@ -3,16 +3,24 @@ import 'package:flutter/material.dart';
 
 class SigninScreen extends StatefulWidget {
   SigninScreen({Key? key}) : super(key: key);
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  String _status = "";
 
   @override
   State<SigninScreen> createState() => _SigninScreenState();
 }
 
 class _SigninScreenState extends State<SigninScreen> {
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  late TextEditingController emailController;
+  late TextEditingController passwordController;
+  String status = "";
+
+  @override
+  initState() {
+    super.initState();
+    emailController = TextEditingController();
+    passwordController = TextEditingController();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -23,14 +31,14 @@ class _SigninScreenState extends State<SigninScreen> {
           style: TextStyle(fontSize: 36),
         ),
         Form(
-          key: widget._formKey,
+          key: formKey,
           child: Container(
             padding: const EdgeInsets.all(64.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
+              children: [
                 TextFormField(
-                  controller: widget._emailController,
+                  controller: emailController,
                   decoration: const InputDecoration(labelText: 'Email'),
                   validator: (String? value) {
                     if (value != null && value.isEmpty) {
@@ -40,7 +48,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   },
                 ),
                 TextFormField(
-                  controller: widget._passwordController,
+                  controller: passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(labelText: 'Password'),
                   validator: (String? value) {
@@ -55,19 +63,25 @@ class _SigninScreenState extends State<SigninScreen> {
                   alignment: Alignment.center,
                   child: ElevatedButton(
                     onPressed: () async {
-                      if (widget._formKey.currentState!.validate()) {
+                      if (formKey.currentState!.validate()) {
                         try {
                           await FirebaseAuth.instance
                               .signInWithEmailAndPassword(
-                            email: widget._emailController.text,
-                            password: widget._emailController.text,
+                            email: emailController.text,
+                            password: passwordController.text,
                           );
+                          setState(() {
+                            status = 'Sign-in success';
+                          });
                         } on FirebaseAuthException catch (e) {
                           if (e.code == 'user-not-found') {
-                            widget._status = 'No user found for that email.';
+                            setState(() {
+                              status = 'No user found for that email.';
+                            });
                           } else if (e.code == 'wrong-password') {
-                            widget._status =
-                                'Wrong password provided for that user.';
+                            setState(() {
+                              status = 'Wrong password provided for that user.';
+                            });
                           }
                         }
                       }
@@ -78,7 +92,7 @@ class _SigninScreenState extends State<SigninScreen> {
                 Container(
                   padding: const EdgeInsets.all(16.0),
                   alignment: Alignment.center,
-                  child: Text(widget._status),
+                  child: Text(status),
                 )
               ],
             ),
