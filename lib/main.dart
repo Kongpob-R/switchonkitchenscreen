@@ -22,11 +22,25 @@ class KitchenRoute extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        resizeToAvoidBottomInset: false,
-        appBar: AppBar(
-          title: const Text("Kitchen Screen"),
-        ),
-        body: const OrderCard());
+      resizeToAvoidBottomInset: false,
+      appBar: AppBar(
+        title: const Text("Kitchen Screen"),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(
+              Icons.exit_to_app,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              FirebaseAuth.instance.signOut();
+            },
+          )
+        ],
+      ),
+      body: const AuthGate(
+        screen: OrderCard(),
+      ),
+    );
   }
 }
 

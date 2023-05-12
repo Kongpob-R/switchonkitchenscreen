@@ -1,6 +1,6 @@
 import 'dart:html';
 
-import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker_web/image_picker_web.dart';
@@ -13,12 +13,37 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
+  String? imgUrl;
+  List<String> urls = [];
+  String errorMsg = "";
+  DatabaseReference bannerRef = FirebaseDatabase.instance.ref("banner");
+
   @override
   initState() {
     super.initState();
+    connect();
   }
 
-  String? imgUrl;
+  void connect() async {
+    bannerRef.onValue.listen(
+      (DatabaseEvent event) {
+        final snapShotOnValue = event.snapshot;
+        final data = event.snapshot.value;
+        print(data);
+        setState(
+          () {
+            if (data != null) {}
+            if (snapShotOnValue.exists) {
+              // urls = snapShotOnValue.value as List<String>;
+              urls = ["hello"];
+            } else {
+              urls = [];
+            }
+          },
+        );
+      },
+    );
+  }
 
   uploadToStorage() async {
     FirebaseStorage fs = FirebaseStorage.instance;
@@ -32,45 +57,49 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: FirebaseStorage.instance.ref().child('newfile').getDownloadURL(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          return Center(
-            child: Text(snapshot.error.toString()),
-          );
-        }
-        if (snapshot.connectionState == ConnectionState.done) {
-          return Scaffold(
-              body: Column(
-            children: [
-              imgUrl == null
-                  ? const Placeholder(
-                      fallbackHeight: 200,
-                      fallbackWidth: 400,
-                    )
-                  : SizedBox(
-                      height: 300,
-                      width: 300,
-                      child: Image.network(
-                        imgUrl!,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-              const SizedBox(
-                height: 50,
-              ),
-              ElevatedButton(
-                onPressed: () => uploadToStorage(),
-                child: const Text("Upload"),
-              ),
-            ],
-          ));
-        }
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
-      },
+    if (errorMsg != "") {
+      return Center(
+        child: Text(errorMsg),
+      );
+    }
+    if (urls.isNotEmpty) {
+      return ListView.builder(
+        reverse: true,
+        itemCount: urls.length,
+        itemBuilder: (context, index) {
+          return Text(urls[index]);
+        },
+      );
+    }
+
+    // return Scaffold(
+    //   body: Column(
+    //     children: [
+    //       imgUrl == null
+    //           ? const Placeholder(
+    //               fallbackHeight: 200,
+    //               fallbackWidth: 400,
+    //             )
+    //           : SizedBox(
+    //               height: 300,
+    //               width: 300,
+    //               child: Image.network(
+    //                 imgUrl!,
+    //                 fit: BoxFit.contain,
+    //               ),
+    //             ),
+    //       const SizedBox(
+    //         height: 50,
+    //       ),
+    //       ElevatedButton(
+    //         onPressed: () => uploadToStorage(),
+    //         child: const Text("Upload"),
+    //       ),
+    //     ],
+    //   ),
+    // );
+    return const Center(
+      child: CircularProgressIndicator(),
     );
   }
 }
