@@ -5,10 +5,11 @@
   "targets": {
     "switch-on-coffee-and-keto": {
       "hosting": {
-        "switchon-kitchenscreen": [
+        "kitchenscreen": [
           "switch-on-kitchenscreen"
         ]
       }
     }
-  }
+  },
+  "etags": {}
 }

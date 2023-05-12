@@ -8,6 +8,8 @@
 .buildlog/
 .history
 .svn/
+*.metadata
+*.cache
 
 # IntelliJ related
 *.iml
@@ -30,6 +32,7 @@
 .pub-cache/
 .pub/
 .fvm/
+.firebase/
 /build/
 
 # Web related
