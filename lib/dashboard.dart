@@ -1,4 +1,5 @@
 import 'dart:html';
+import 'dart:js' as js;
 
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -14,9 +15,12 @@ class Dashboard extends StatefulWidget {
 
 class _DashboardState extends State<Dashboard> {
   String? imgUrl;
-  List<String> urls = [];
+  Map<String, List<String>> urls = {};
   String errorMsg = "";
-  DatabaseReference bannerRef = FirebaseDatabase.instance.ref("banner");
+  DatabaseReference fullBannerRef =
+      FirebaseDatabase.instance.ref("banner/fullscreen");
+  DatabaseReference halfBannerRef =
+      FirebaseDatabase.instance.ref("banner/halfscreen");
 
   @override
   initState() {
@@ -25,19 +29,18 @@ class _DashboardState extends State<Dashboard> {
   }
 
   void connect() async {
-    bannerRef.onValue.listen(
+    fullBannerRef.onValue.listen(
       (DatabaseEvent event) {
         final snapShotOnValue = event.snapshot;
-        final data = event.snapshot.value;
-        print(data);
         setState(
           () {
-            if (data != null) {}
             if (snapShotOnValue.exists) {
-              // urls = snapShotOnValue.value as List<String>;
-              urls = ["hello"];
-            } else {
-              urls = [];
+              List<String> newUrls = [];
+              for (var element in event.snapshot.children) {
+                print(element.value);
+                newUrls.add(element.value.toString());
+              }
+              urls['fullBanner'] = newUrls;
             }
           },
         );
@@ -62,13 +65,34 @@ class _DashboardState extends State<Dashboard> {
         child: Text(errorMsg),
       );
     }
-    if (urls.isNotEmpty) {
-      return ListView.builder(
-        reverse: true,
-        itemCount: urls.length,
-        itemBuilder: (context, index) {
-          return Text(urls[index]);
-        },
+    if (urls['fullBanner'] != null) {
+      return Container(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            ListView.builder(
+              reverse: true,
+              shrinkWrap: true,
+              itemCount: urls['fullBanner']!.length,
+              itemBuilder: (context, index) {
+                return InkWell(
+                  onTap: () => js.context
+                      .callMethod('open', [urls['fullBanner']![index]]),
+                  child: Text(
+                    urls['fullBanner']![index],
+                    style: const TextStyle(
+                        decoration: TextDecoration.underline,
+                        color: Colors.blue),
+                  ),
+                );
+              },
+            ),
+            ElevatedButton(
+              onPressed: () => uploadToStorage(),
+              child: const Text("Upload Fullscreen Banner"),
+            ),
+          ],
+        ),
       );
     }
 
